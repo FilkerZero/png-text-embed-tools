@@ -9,3 +9,32 @@ file.
 
 References:
 http://stackoverflow.com/questions/9036152/insert-a-text-chunk-into-a-png-image
+
+The "png-text-embed-tools" fork makes the following changes:
+1) Removes several memory leaks and buffer overflow issues
+2) Makes tools that build and work on both Linux and Windows (under Mingw64)
+3) Replaced "png-text-append" with "png-text-add" that works with files as well as stdin/stdout.
+
+The text extraction tool source built under Mingw, but didn't work because the PNG file
+was opened with `fopen(name, "r")`, not `fopen(name, "rb")` - that "b" after the "r"
+is required on Windows to get a stream or FILE to not do newline conversion, and it's
+harmless on Linux.
+
+The "png-text-append" program was another matter. I substantially rewrote it, using
+"ntohl()" and "htonl()" instead of the byte swapping function that acted on a buffer
+that the original version implemented directly. Outside of error exits, the new
+version now releases the memory it allocates, and it does not overwrite the bounds
+of the explcitly allocated buffers. It uses binary I/O with "open()", "read()",
+and "write()", it can accept either stdin or a file for its input and can write
+either to a file or stdout for its output, has better error messages, and
+in general is less sloppy.
+
+All that said, the code in this repository is not up to my standards.
+I'm a professional software engineer, and even on throw-away projects like
+this one, I have standards to uphold.
+
+The original is 14 years old. I forked it because I am being lazy and
+didn't want to write my own tool to pull prompts out of Stable Diffusion Webui
+generated PNG files when my DB of prompts I liked got corrupted. I'm a bit
+of a perfectionist, so this fork will probably go from the soon to be
+current state to something I can look at and not want to rewrite.
